@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VideoToolsPro - Tải Video & Dịch Phụ Đề</title>
+    <link id="favicon" rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🛠️</text></svg>">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; display: flex; align-items: center; justify-content: center; color: #333; padding: 20px; }
+        .container { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(20px); border-radius: 20px; padding: 30px 40px; box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1); width: 100%; max-width: 800px; border: 1px solid rgba(255, 255, 255, 0.2); }
+        .header { text-align: center; margin-bottom: 30px; }
+        .header h1 { color: #2c3e50; font-size: 2.5em; margin-bottom: 10px; font-weight: 600; background: linear-gradient(45deg, #667eea, #764ba2); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .header p { color: #7f8c8d; font-size: 1.1em; }
+        .tab-nav { display: flex; border-bottom: 2px solid #e1e8ed; margin-bottom: 30px; }
+        .tab-button { padding: 15px 25px; cursor: pointer; border: none; background: none; font-size: 1.1em; font-weight: 500; color: #7f8c8d; position: relative; transition: color 0.3s ease; }
+        .tab-button.active { color: #667eea; font-weight: 600; }
+        .tab-button.active::after { content: ''; position: absolute; bottom: -2px; left: 0; right: 0; height: 2px; background: #667eea; }
+        .tab-pane { display: none; }
+        .tab-pane.active { display: block; animation: fadeIn 0.5s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .input-group { margin-bottom: 25px; }
+        .input-group label { display: block; margin-bottom: 8px; color: #2c3e50; font-weight: 500; font-size: 1.1em; }
+        .input-field, textarea.input-field { width: 100%; padding: 15px; border: 2px solid #e1e8ed; border-radius: 12px; font-size: 1em; transition: all 0.3s ease; background: rgba(255, 255, 255, 0.9); }
+        textarea.input-field { resize: vertical; min-height: 150px; font-family: 'Monaco', monospace; }
+        .input-field:focus, textarea.input-field:focus { border-color: #667eea; outline: none; box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1); }
+        .button-group { display: flex; flex-wrap: wrap; gap: 15px; margin-top: 20px; }
+        .download-btn { flex: 1; min-width: 150px; padding: 15px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 12px; font-size: 1.1em; font-weight: 600; cursor: pointer; transition: all 0.3s ease; text-transform: uppercase; letter-spacing: 1px; display: flex; align-items: center; justify-content: center; }
+        .download-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3); }
+        .download-btn:disabled { background: #bdc3c7; cursor: not-allowed; transform: none; box-shadow: none; }
+        .file-upload-label { display: inline-block; padding: 15px 25px; background: #f8f9fa; border: 2px dashed #e1e8ed; border-radius: 12px; cursor: pointer; transition: all 0.3s ease; text-align: center; width: 100%; }
+        .file-upload-label:hover { border-color: #667eea; background: rgba(102, 126, 234, 0.1); }
+        .file-name-display { margin-top: 10px; font-size: 0.9em; color: #7f8c8d; font-family: 'Monaco', monospace; }
+        .server-status { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; padding: 12px; border-radius: 10px; font-size: 0.95em; font-weight: 500; }
+        .server-status.online { background: #d5edda; color: #155724; }
+        .server-status.offline { background: #f8d7da; color: #721c24; }
+        .status-dot { width: 10px; height: 10px; border-radius: 50%; animation: pulse-dot 2s infinite; }
+        .status-dot.online { background: #27ae60; }
+        .status-dot.offline { background: #e74c3c; }
+        .progress-container { margin-top: 20px; background: #f8f9fa; border-radius: 15px; padding: 25px; border: 1px solid #e1e8ed; display: none; }
+        .progress-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .progress-status { font-weight: 600; color: #2c3e50; font-size: 1.1em; }
+        .progress-percent { font-size: 1.5em; font-weight: 700; color: #667eea; }
+        .progress-bar { width: 100%; height: 15px; background: #e1e8ed; border-radius: 15px; overflow: hidden; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, #667eea 0%, #764ba2 100%); border-radius: 15px; transition: width 0.5s ease; }
+        .status { margin-top: 15px; padding: 15px; border-radius: 10px; text-align: center; font-weight: 500; display: none; animation: slideIn 0.3s ease; }
+        .status.success { background: #d5edda; color: #155724; }
+        .status.error { background: #f8d7da; color: #721c24; }
+        .spinner { display: inline-block; vertical-align: middle; width: 20px; height: 20px; border: 3px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 1s linear infinite; margin-right: 10px; }
+        .results-container { background: #f8f9fa; padding: 20px; border-radius: 12px; margin-top: 20px; border: 1px solid #e1e8ed; display: none; }
+        .results-container h3 { color: #2c3e50; margin-bottom: 15px; font-size: 1.2em; }
+        .results-container pre { background: #fff; padding: 15px; border-radius: 8px; white-space: pre-wrap; word-wrap: break-word; max-height: 300px; overflow-y: auto; font-family: 'Monaco', monospace; font-size: 0.9em; }
+        .quality-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 15px; margin-bottom: 25px; }
+        .quality-option { padding: 15px; border: 2px solid #e1e8ed; border-radius: 12px; background: rgba(255, 255, 255, 0.9); cursor: pointer; text-align: center; transition: all 0.3s ease; }
+        .quality-option:hover { border-color: #667eea; background: rgba(102, 126, 234, 0.1); transform: translateY(-2px); }
+        .quality-option.selected { border-color: #667eea; background: rgba(102, 126, 234, 0.2); color: #667eea; font-weight: 600; }
+        .quality-option .title { font-size: 1.1em; font-weight: 600; }
+        .toggle-advanced { background: none; border: none; color: #667eea; font-weight: 500; cursor: pointer; padding: 8px; border-radius: 6px; transition: all 0.3s ease; display: block; margin-top: -15px; margin-bottom: 15px; }
+        .toggle-advanced:hover { background: rgba(102, 126, 234, 0.1); }
+        .advanced-options { background: #f8f9fa; padding: 20px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #e1e8ed; }
+        .advanced-options h3 { color: #2c3e50; margin-bottom: 15px; font-size: 1.2em; }
+        .options-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
+        .option-item { display: flex; align-items: center; gap: 8px; }
+        .option-item input[type="checkbox"] { width: 18px; height: 18px; accent-color: #667eea; }
+        .option-item label { cursor: pointer; font-size: 0.95em; }
+        .terminal { background: #2c3e50; color: #ecf0f1; padding: 20px; border-radius: 12px; margin-top: 20px; font-family: 'Monaco', 'Menlo', 'Courier New', monospace; font-size: 13px; line-height: 1.6; max-height: 400px; overflow-y: auto; display: none; box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2); }
+        .terminal-header { display: flex; align-items: center; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid #34495e; }
+        .terminal-dots { display: flex; gap: 6px; }
+        .terminal-dot { width: 12px; height: 12px; border-radius: 50%; }
+        .terminal-dot.red { background: #e74c3c; }
+        .terminal-dot.yellow { background: #f39c12; }
+        .terminal-dot.green { background: #27ae60; }
+        .terminal-title { margin-left: 15px; font-weight: 600; color: #bdc3c7; }
+        .progress-details { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-top: 20px; font-size: 0.9em; }
+        .progress-info { display: flex; align-items: center; gap: 10px; background: rgba(102, 126, 234, 0.05); padding: 8px 12px; border-radius: 8px; border: 1px solid rgba(102, 126, 234, 0.1); }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes pulse-dot { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+        @keyframes slideIn { from { transform: translateY(-10px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🛠️ Công Cụ Pro</h1>
+            <p>Tải video và chuyển đổi phụ đề tất cả trong một</p>
+        </div>
+
+        <div class="tab-nav">
+            <button class="tab-button active" data-tab="downloader">🎬 Tải Video</button>
+            <button class="tab-button" data-tab="converter">🔄 Dịch & Sáng tạo</button>
+        </div>
+
+        <div class="tab-content">
+            <div id="downloaderTab" class="tab-pane active">
+                <div class="server-status" id="serverStatus">
+                    <div class="status-dot offline"></div>
+                    <span>Đang kiểm tra server...</span>
+                </div>
+                <form id="downloadForm" onsubmit="return false;">
+                    <div class="input-group">
+                        <label for="url">🔗 Link YouTube/Video:</label>
+                        <input type="url" id="url" class="input-field" placeholder="https://www.youtube.com/watch?v=..." required>
+                    </div>
+                    <div class="input-group">
+                        <label>📺 Chất lượng video:</label>
+                        <div class="quality-grid">
+                            <div class="quality-option selected" data-quality="best"><div class="title">🏆 Tốt nhất</div></div>
+                            <div class="quality-option" data-quality="1080p"><div class="title">🎥 1080p</div></div>
+                            <div class="quality-option" data-quality="720p"><div class="title">📱 720p</div></div>
+                            <div class="quality-option" data-quality="audio"><div class="title">🎵 Audio</div></div>
+                        </div>
+                    </div>
+                    
+                    <button type="button" class="toggle-advanced" id="toggleAdvanced">⚙️ Tùy chọn nâng cao</button>
+                    <div class="advanced-options" id="advancedOptions" style="display: none;">
+                        <h3>Tùy chọn bổ sung</h3>
+                        <div class="options-grid">
+                            <div class="option-item"><input type="checkbox" id="optAria"><label for="optAria">⚡ Tăng tốc bằng aria2c (cần cài đặt)</label></div>
+                            <div class="option-item"><input type="checkbox" id="optSubtitles"><label for="optSubtitles">📝 Tải phụ đề</label></div>
+                            <div class="option-item"><input type="checkbox" id="optThumbnail"><label for="optThumbnail">🖼️ Tải thumbnail</label></div>
+                            <div class="option-item"><input type="checkbox" id="optMetadata"><label for="optMetadata">📊 Thêm metadata</label></div>
+                            <div class="option-item"><input type="checkbox" id="optPlaylist"><label for="optPlaylist">📋 Tải toàn bộ playlist</label></div>
+                        </div>
+                    </div>
+
+                    <div class="button-group">
+                        <button type="button" class="download-btn" id="serverBtn">🚀 Tải xuống ngay</button>
+                        <button type="button" class="download-btn" id="terminalBtn">📋 Tạo lệnh Terminal</button>
+                    </div>
+                </form>
+
+                <div class="terminal" id="terminal">
+                    <div class="terminal-header">
+                        <div class="terminal-dots"><div class="terminal-dot red"></div><div class="terminal-dot yellow"></div><div class="terminal-dot green"></div></div>
+                        <div class="terminal-title">Terminal Command</div>
+                    </div>
+                    <div id="terminalContent" style="white-space: pre-wrap; word-wrap: break-word;"></div>
+                </div>
+
+                <div class="progress-container" id="progressContainer">
+                    <div class="progress-header">
+                        <div class="progress-status" id="progressStatus">Đang chuẩn bị...</div>
+                        <div class="progress-percent" id="progressPercent">0%</div>
+                    </div>
+                    <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width: 0%"></div></div>
+                    <div class="progress-details" id="progressDetails">
+                         <div class="progress-info"><span>📁</span><span id="progressFilename">--</span></div>
+                         <div class="progress-info"><span>💾</span><span id="progressSize">--</span></div>
+                         <div class="progress-info"><span>🚀</span><span id="progressSpeed">--</span></div>
+                         <div class="progress-info"><span>⏱️</span><span id="progressETA">--</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="converterTab" class="tab-pane">
+                <div class="input-group">
+                    <label>📤 Tải lên file SRT/JSON gốc:</label>
+                    <label for="fileInput" class="file-upload-label"><span>📤 Chọn File (.srt, .json)</span></label>
+                    <input type="file" id="fileInput" accept=".json,.srt" style="display: none;">
+                    <p id="fileNameDisplay" class="file-name-display"></p>
+                </div>
+                <div class="button-group">
+                    <button type="button" class="download-btn" id="superTranslateBtn">🚀 Dịch & Sáng tạo (AI Nâng cao)</button>
+                </div>
+                <div class="progress-container" id="translateProgressContainer">
+                    <div class="progress-header">
+                        <div class="progress-status" id="translateProgressStatus">Đang chờ...</div>
+                        <div class="progress-percent" id="translateProgressPercent">0%</div>
+                    </div>
+                    <div class="progress-bar"><div class="progress-fill" id="translateProgressFill" style="width: 0%"></div></div>
+                </div>
+                <div class="results-container" id="resultsContainer">
+                    <h3>🎉 Kết quả của mày đây:</h3>
+                    <div class="input-group">
+                        <label for="srtOutput">📄 Phụ đề đã dịch:</label>
+                        <textarea id="srtOutput" class="input-field" readonly></textarea>
+                    </div>
+                    <div class="input-group">
+                        <label for="captionsOutput">🖋️ Caption cho Video:</label>
+                        <pre id="captionsOutput"></pre>
+                    </div>
+                    <div class="input-group">
+                        <label for="thumbnailOutput">🖼️ Text cho Thumbnail:</label>
+                        <pre id="thumbnailOutput"></pre>
+                    </div>
+                    <div class="button-group">
+                        <button type="button" class="download-btn" id="copyBtn">Sao chép Sub</button>
+                        <button type="button" class="download-btn" id="downloadSrtBtn">Tải Sub (.srt)</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="status" id="statusMessage"></div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const statusMessage = document.getElementById('statusMessage');
+            const originalTitle = document.title;
+            let serverOnline = false;
+            let uploadedFileContent = null;
+            let uploadedFileTypeIsJson = false;
+
+            const tabButtons = document.querySelectorAll('.tab-button');
+            const tabPanes = document.querySelectorAll('.tab-pane');
+            tabButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    tabButtons.forEach(btn => btn.classList.remove('active'));
+                    button.classList.add('active');
+                    tabPanes.forEach(pane => pane.classList.remove('active'));
+                    document.getElementById(button.dataset.tab + 'Tab').classList.add('active');
+                });
+            });
+
+            // --- Downloader Elements ---
+            const urlInput = document.getElementById('url');
+            const serverBtn = document.getElementById('serverBtn');
+            const terminalBtn = document.getElementById('terminalBtn');
+            const terminalContainer = document.getElementById('terminal');
+            const terminalContent = document.getElementById('terminalContent');
+            const serverStatusEl = document.getElementById('serverStatus');
+            const progressContainer = document.getElementById('progressContainer');
+            const progressFill = document.getElementById('progressFill');
+            const progressPercent = document.getElementById('progressPercent');
+            const progressStatus = document.getElementById('progressStatus');
+            const progressFilename = document.getElementById('progressFilename');
+            const progressSize = document.getElementById('progressSize');
+            const progressSpeed = document.getElementById('progressSpeed');
+            const progressETA = document.getElementById('progressETA');
+            const toggleAdvancedBtn = document.getElementById('toggleAdvanced');
+            const advancedOptionsContainer = document.getElementById('advancedOptions');
+            let selectedQuality = 'best';
+            let currentDownloadId = null;
+            let progressInterval = null;
+
+            // --- SRT Converter Elements ---
+            const fileInput = document.getElementById('fileInput');
+            const fileNameDisplay = document.getElementById('fileNameDisplay');
+            const superTranslateBtn = document.getElementById('superTranslateBtn');
+            const translateProgressContainer = document.getElementById('translateProgressContainer');
+            const translateProgressStatus = document.getElementById('translateProgressStatus');
+            const translateProgressPercent = document.getElementById('translateProgressPercent');
+            const translateProgressFill = document.getElementById('translateProgressFill');
+            const resultsContainer = document.getElementById('resultsContainer');
+            const srtOutput = document.getElementById('srtOutput');
+            const captionsOutput = document.getElementById('captionsOutput');
+            const thumbnailOutput = document.getElementById('thumbnailOutput');
+            const copyBtn = document.getElementById('copyBtn');
+            const downloadSrtBtn = document.getElementById('downloadSrtBtn');
+            let translateInterval = null;
+
+            function showStatus(message, type, autoHide = true) {
+                statusMessage.textContent = message;
+                statusMessage.className = `status ${type}`;
+                statusMessage.style.display = 'block';
+                if (autoHide) setTimeout(() => { statusMessage.style.display = 'none'; }, 5000);
+            }
+
+            async function checkServerStatus() {
+                try {
+                    const response = await fetch('/info', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({url: 'https://youtube.com'}), signal: AbortSignal.timeout(3000) });
+                    updateServerStatus(true);
+                } catch (error) {
+                    updateServerStatus(false);
+                }
+            }
+            function updateServerStatus(online) {
+                serverOnline = online;
+                if (!serverStatusEl) return;
+                const dot = serverStatusEl.querySelector('.status-dot');
+                const text = serverStatusEl.querySelector('span');
+                if (online) {
+                    serverStatusEl.className = 'server-status online';
+                    dot.className = 'status-dot online';
+                    text.textContent = '🟢 Server đang hoạt động';
+                } else {
+                    serverStatusEl.className = 'server-status offline';
+                    dot.className = 'status-dot offline';
+                    text.textContent = '🔴 Server offline. Chạy file server.py để bắt đầu.';
+                }
+            }
+            
+            function handleServerDownload() {
+                if (!serverOnline) { showStatus('🔴 Server offline. Vui lòng chạy server trước.', 'error'); return; }
+                const url = urlInput.value;
+                if (!url) { showStatus('❌ Vui lòng nhập link YouTube!', 'error'); return; }
+                setDownloadInProgress(true);
+                progressContainer.style.display = 'block';
+                updateProgressBar(0, { status: 'Bắt đầu...', filename: '--', size: '--', speed: '--', eta: '--' });
+                const payload = {
+                    url: url, quality: selectedQuality,
+                    options: {
+                        subtitles: document.getElementById('optSubtitles').checked,
+                        thumbnail: document.getElementById('optThumbnail').checked,
+                        metadata: document.getElementById('optMetadata').checked,
+                        playlist: document.getElementById('optPlaylist').checked
+                    }
+                };
+                fetch('/download', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) { currentDownloadId = data.download_id; startProgressMonitoring(); } 
+                    else { throw new Error(data.error || 'Lỗi không xác định.'); }
+                })
+                .catch(error => { showStatus(`❌ Lỗi bắt đầu tải: ${error.message}`, 'error'); setDownloadInProgress(false); });
+            }
+
+            function generateTerminalCommand() {
+                const url = urlInput.value;
+                if (!url) { showStatus('❌ Vui lòng nhập link YouTube!', 'error'); return; }
+                let command = `yt-dlp`;
+                const options = {
+                    aria: document.getElementById('optAria').checked,
+                    subtitles: document.getElementById('optSubtitles').checked,
+                    thumbnail: document.getElementById('optThumbnail').checked,
+                    metadata: document.getElementById('optMetadata').checked,
+                    playlist: document.getElementById('optPlaylist').checked
+                };
+                if (options.aria) { command += ` --downloader aria2c --downloader-args "aria2c:-x 16 -s 16 -k 1M"`; }
+                if (selectedQuality === 'audio') { command += ` -x --audio-format mp3`; } 
+                else if (selectedQuality !== 'best') { const height = selectedQuality.replace('p', ''); command += ` -f "bv[height<=?${height}][vcodec^=avc1]+ba/b[height<=?${height}]/best"`; }
+                if (options.subtitles) command += ' --write-subs --all-subs';
+                if (options.thumbnail) command += ' --write-thumbnail';
+                if (options.metadata) command += ' --add-metadata';
+                if (options.playlist) command += ' --yes-playlist'; else command += ' --no-playlist';
+                command += ` --merge-output-format mp4 "${url}"`;
+                terminalContent.textContent = command;
+                terminalContainer.style.display = 'block';
+                showStatus('✅ Đã tạo lệnh Terminal! Copy và dán vào Terminal để chạy.', 'success');
+            }
+
+            function startProgressMonitoring() {
+                if (progressInterval) clearInterval(progressInterval);
+                progressInterval = setInterval(async () => {
+                    if (!currentDownloadId) { resetDownloadState(); return; }
+                    try {
+                        const response = await fetch('/progress', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ download_id: currentDownloadId }) });
+                        const result = await response.json();
+                        updateProgressBar(result.progress, result);
+                        if (result.status === 'finished') {
+                            showStatus('✅ Tải xuống hoàn tất!', 'success');
+                            updateProgressBar(100, { ...result, status: 'Hoàn tất!' });
+                            resetDownloadState();
+                        } else if (result.status === 'error') {
+                            throw new Error(result.error || 'Lỗi trong quá trình tải.');
+                        }
+                    } catch (error) { showStatus(`❌ Lỗi tiến trình: ${error.message}`, 'error'); resetDownloadState(); }
+                }, 1000);
+            }
+            function updateProgressBar(percent, data) {
+                const p = Math.round(percent || 0);
+                progressFill.style.width = `${p}%`;
+                progressPercent.textContent = `${p}%`;
+                progressStatus.textContent = (data.status || '...').charAt(0).toUpperCase() + (data.status || '...').slice(1);
+                progressFilename.textContent = data.filename || '--';
+                progressSize.textContent = data.size || '--';
+                progressSpeed.textContent = data.speed || '--';
+                progressETA.textContent = data.eta || '--';
+                if (data.status === 'downloading') { document.title = `(${p}%) ${originalTitle}`; }
+            }
+            function setDownloadInProgress(inProgress) {
+                serverBtn.disabled = inProgress;
+                terminalBtn.disabled = inProgress;
+                serverBtn.innerHTML = inProgress ? '<span class="spinner"></span> Đang tải...' : '🚀 Tải xuống ngay';
+            }
+            function resetDownloadState() {
+                clearInterval(progressInterval);
+                progressInterval = null;
+                currentDownloadId = null;
+                setDownloadInProgress(false);
+                document.title = originalTitle;
+            }
+
+            function handleFileUpload(event) {
+                const file = event.target.files[0];
+                if (!file) return;
+                fileNameDisplay.textContent = `File đã chọn: ${file.name}`;
+                uploadedFileTypeIsJson = file.name.toLowerCase().endsWith('.json');
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    uploadedFileContent = e.target.result;
+                    showStatus('✅ Đã tải file lên. Sẵn sàng để dịch!', 'success');
+                };
+                reader.onerror = () => showStatus('❌ Không thể đọc file.', 'error');
+                reader.readAsText(file);
+            }
+
+            async function handleSuperTranslate() {
+                if (!uploadedFileContent) {
+                    showStatus('❌ Mày chưa tải file nào lên cả.', 'error');
+                    return;
+                }
+                if (!serverOnline) {
+                    showStatus('🔴 Server offline. Vui lòng chạy file server.py.', 'error');
+                    return;
+                }
+                superTranslateBtn.disabled = true;
+                superTranslateBtn.innerHTML = `<span class="spinner"></span> Đang gửi yêu cầu...`;
+                resultsContainer.style.display = 'none';
+                translateProgressContainer.style.display = 'block';
+                try {
+                    const payload = {
+                        content: uploadedFileContent,
+                        is_json: uploadedFileTypeIsJson
+                    };
+                    const response = await fetch('/super-translate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                    const data = await response.json();
+                    if (data.success && data.task_id) {
+                        startTranslatePolling(data.task_id);
+                    } else {
+                        throw new Error(data.error || 'Không thể bắt đầu tác vụ dịch.');
+                    }
+                } catch (error) {
+                    showStatus(`Lỗi: ${error.message}`, 'error');
+                    superTranslateBtn.disabled = false;
+                    superTranslateBtn.textContent = '🚀 Dịch & Sáng tạo (AI Nâng cao)';
+                }
+            }
+
+            function startTranslatePolling(taskId) {
+                if (translateInterval) clearInterval(translateInterval);
+                translateInterval = setInterval(async () => {
+                    try {
+                        const response = await fetch('/super-translate-progress', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ task_id: taskId }) });
+                        const data = await response.json();
+                        translateProgressStatus.textContent = data.status_text || 'Đang xử lý...';
+                        const p = Math.round(data.progress || 0);
+                        translateProgressPercent.textContent = `${p}%`;
+                        translateProgressFill.style.width = `${p}%`;
+                        document.title = `(${p}%) ${originalTitle}`;
+                        if (data.status === 'finished') {
+                            clearInterval(translateInterval);
+                            translateInterval = null;
+                            document.title = originalTitle;
+                            showStatus('🎉 Xong! Kết quả của mày đây.', 'success');
+                            translateProgressContainer.style.display = 'none';
+                            resultsContainer.style.display = 'block';
+                            srtOutput.value = data.translated_srt;
+                            captionsOutput.textContent = data.captions;
+                            thumbnailOutput.textContent = data.thumbnail_text;
+                            superTranslateBtn.disabled = false;
+                            superTranslateBtn.textContent = '🚀 Dịch & Sáng tạo (AI Nâng cao)';
+                        } else if (data.status === 'error') {
+                            throw new Error(data.error);
+                        }
+                    } catch (error) {
+                        clearInterval(translateInterval);
+                        translateInterval = null;
+                        document.title = originalTitle;
+                        showStatus(`Lỗi: ${error.message}`, 'error');
+                        translateProgressContainer.style.display = 'none';
+                        superTranslateBtn.disabled = false;
+                        superTranslateBtn.textContent = '🚀 Dịch & Sáng tạo (AI Nâng cao)';
+                    }
+                }, 2000);
+            }
+            
+            function copySrtToClipboard() {
+                const srtText = srtOutput.value;
+                if (!srtText) { showStatus('❌ Không có gì để sao chép.', 'error'); return; }
+                navigator.clipboard.writeText(srtText).then(() => showStatus('✅ Đã sao chép phụ đề!', 'success'));
+            }
+
+            function downloadSrtFile() {
+                const srtText = srtOutput.value;
+                if (!srtText) return;
+                const blob = new Blob([srtText], { type: 'text/plain;charset=utf-8' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'VIETSUB_Dich_Boi_AI.srt';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }
+
+            // --- Event Listeners ---
+            document.querySelectorAll('.quality-option').forEach(option => {
+                option.addEventListener('click', function() {
+                    document.querySelectorAll('.quality-option').forEach(opt => opt.classList.remove('selected'));
+                    this.classList.add('selected');
+                    selectedQuality = this.dataset.quality;
+                });
+            });
+            if (serverBtn) serverBtn.addEventListener('click', handleServerDownload);
+            if (terminalBtn) terminalBtn.addEventListener('click', generateTerminalCommand);
+            if (toggleAdvancedBtn) toggleAdvancedBtn.addEventListener('click', () => {
+                const isVisible = advancedOptionsContainer.style.display !== 'none';
+                advancedOptionsContainer.style.display = isVisible ? 'none' : 'block';
+                toggleAdvancedBtn.textContent = isVisible ? '⚙️ Tùy chọn nâng cao' : '🔼 Ẩn tùy chọn';
+            });
+            
+            fileInput.addEventListener('change', handleFileUpload);
+            superTranslateBtn.addEventListener('click', handleSuperTranslate);
+            copyBtn.addEventListener('click', copySrtToClipboard);
+            downloadSrtBtn.addEventListener('click', downloadSrtFile);
+            
+            // --- Initial Load ---
+            checkServerStatus();
+            setInterval(checkServerStatus, 15000);
+        });
+    </script>
+</body>
+</html>
